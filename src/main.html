@@ -10,18 +10,15 @@
 <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css'><script src='https://cdnjs.cloudflare.com/ajax/libs/prefixfree/1.0.7/prefixfree.min.js'></script>
 
 <link rel="stylesheet" href="/css/main.css">
+<!-- <script src="/js/matchmaking.js"></script> -->
 </head>
 <body >
 <div class="login">
     <h1>Login</h1>
-    
-  
-    <form method="post">
         <input id = "name" type="text" name="u" placeholder="Enter your Name" required="required" />
-        
-		<button  id="Login" type="submit" class="btn btn-primary btn-block btn-large" onclick="showDiv()">Let me in.</button>
+		<button  id="Login" type="submit" class="btn btn-primary btn-block btn-large" onclick="findChallenge()">Let me in.</button>
 		<div class="loader"></div>
-    </form>
+   
     
 </div>
 
@@ -30,6 +27,96 @@
 </script>
 <script src="https://www.gstatic.com/firebasejs/6.2.3/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/6.2.3/firebase-firestore.js"></script>
+<script>
+// Your web app's Firebase configuration
+var firebaseConfig = {
+    apiKey: "AIzaSyCQzyMH-DGHeuYjuefdjzrR3y_k5E67yYY",
+    authDomain: "code-brawl.firebaseapp.com",
+    databaseURL: "https://code-brawl.firebaseio.com",
+    projectId: "code-brawl",
+    storageBucket: "code-brawl.appspot.com",
+    messagingSenderId: "585147751336",
+    appId: "1:585147751336:web:38c91939569aa29d"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
+var challengesRef = db.collection("challenges");
+
+function findChallenge() {
+	console.log("bb")
+    var challenges = challengesRef.where("started", "==", false);
+    var challengeFound = false;
+
+    challenges.get().then(function(querySnapshot) {
+        querySnapshot.forEach(function(doc) {
+            var data = doc.data()
+            console.log(doc.id, ' => ', data);
+
+            if (!data.started) {
+                joinChallenge(doc.id);
+                challengeFound = true;
+                break;
+            }
+        });
+    });
+
+    if (!challengeFound) {
+        createChallenge();
+    }
+}
+
+function createChallenge() {
+    var name = document.getElementById("name").value;
+    var data = {
+        'playerOne': name,
+        'questions': generateQuestions(),
+        'points': [0, 0],
+        'started': false,
+        'progress': [0, 0]
+    }
+
+    var newChallengeRef = db.collection("challenges").doc().set(data)
+        .then(function() {
+            console.log("Document successfully written!");
+        })
+        .catch(function(error) {
+            console.error("Error writing document: ", error);
+        });;
+
+    newChallengeRef.onSnapShot(function(doc) {
+        alert(doc.data().playerTwo + ' Joined!');
+    });
+}
+
+function joinChallenge(id) {
+    var challengeRef = db.collection("challenges").doc(id);
+    var name = document.getElementById("name").value;
+
+    challengeRef.update({
+        'playerTwo': name,
+        'started': true,
+        'startingTime': firebase.firestore.FieldValue.serverTimestamp(),
+        'playerOneTime': firebase.firestore.FieldValue.serverTimestamp(),
+        'playerTwoTime': firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    challengeRef.onSnapShot(function(doc) {
+        alert('You Joined ' + doc.data().playerOne + '!');
+    });
+}
+
+function generateQuestions() {
+    var questions = []
+    while (questions.length < 3) {
+        var question = Math.floor(Math.random() * 30) + 1;
+        if (questions.indexOf(question) === -1) {
+            questions.push(question);
+        }
+    }
+}
+</script>
 
 </body>
 </html>
