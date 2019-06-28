@@ -1,3 +1,8 @@
+var loc = document.getElementById("Login");
+
+loc.addEventListener("click", () => {
+findChallenge();
+})
 // Your web app's Firebase configuration
 var firebaseConfig = {
     apiKey: "AIzaSyCQzyMH-DGHeuYjuefdjzrR3y_k5E67yYY",
@@ -13,12 +18,14 @@ var firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 var db = firebase.firestore();
 var challengesRef = db.collection("challenges");
+var currentChallenge = null;
+var challengeListener = null;
 
-function findChallenge() {
+async function findChallenge() {
     var challenges = challengesRef.where("started", "==", false);
-    var challengeFound = false;
+	var challengeFound = false;
 
-    challenges.get().then(function(querySnapshot) {
+    await challenges.get().then(function(querySnapshot) {
         querySnapshot.forEach(function(doc) {
             var data = doc.data()
             console.log(doc.id, ' => ', data);
@@ -26,7 +33,6 @@ function findChallenge() {
             if (!data.started) {
                 joinChallenge(doc.id);
                 challengeFound = true;
-                break;
             }
         });
     });
@@ -40,13 +46,15 @@ function createChallenge() {
     var name = document.getElementById("name").value;
     var data = {
         'playerOne': name,
-        'questions': generateQuestions(),
         'points': [0, 0],
+        'questions': generateQuestions(),
         'started': false,
         'progress': [0, 0]
     }
 
-    var newChallengeRef = db.collection("challenges").doc().set(data)
+    var newChallengeRef = db.collection("challenges").doc();
+
+	newChallengeRef.set(data)
         .then(function() {
             console.log("Document successfully written!");
         })
@@ -54,8 +62,13 @@ function createChallenge() {
             console.error("Error writing document: ", error);
         });;
 
-    newChallengeRef.onSnapShot(function(doc) {
-        alert(doc.data().playerTwo + ' Joined!');
+    currentChallenge = newChallengeRef;
+
+    newChallengeRef.onSnapshot(function(doc) {
+        data = doc.data()
+        if (data.started) {
+            alert(doc.data().playerTwo + ' Joined!');
+        }
     });
 }
 
@@ -71,17 +84,33 @@ function joinChallenge(id) {
         'playerTwoTime': firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    challengeRef.onSnapShot(function(doc) {
-        alert('You Joined ' + doc.data().playerOne + '!');
+    challengeRef.get().then(function(doc) {
+	    if (doc.exists) {
+			alert('You Joined ' + doc.data().playerOne + '!');
+	        console.log("Document data:", doc.data());
+	    } else {
+	        console.log("No such document!");
+	    }
+	}).catch(function(error) {
+	    console.log("Error getting document:", error);
+	});
+}
+
+function cancelChallenge() {
+    currentChallenge.delete().then(function() {
+        console.log("Document successfully deleted!");
+    }).catch(function(error) {
+        console.error("Error removing document: ", error);
     });
 }
 
 function generateQuestions() {
     var questions = []
     while (questions.length < 3) {
-        var question = Math.floor(Math.random() * 30) + 1;
+        var question = Math.floor(Math.random() * 30);
         if (questions.indexOf(question) === -1) {
             questions.push(question);
         }
     }
+    return questions;
 }
