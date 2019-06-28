@@ -1,6 +1,6 @@
-var loc = document.getElementById("Login");
+var button = document.getElementById("Login"); 
 
-loc.addEventListener("click", () => {
+button.addEventListener("click", () => {
 findChallenge();
 })
 // Your web app's Firebase configuration
