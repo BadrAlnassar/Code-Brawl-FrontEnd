@@ -2,7 +2,16 @@ var button = document.getElementById("Login");
 
 button.addEventListener("click", () => {
 findChallenge();
+swal({
+    title: "You successfully joined the room!",
+    text: " Waiting for your friend!",
+    icon: "success",
+    button: "Cancel",
+  }).then(() => {
+      cancelChallenge();
+  })
 })
+
 // Your web app's Firebase configuration
 var firebaseConfig = {
     apiKey: "AIzaSyCQzyMH-DGHeuYjuefdjzrR3y_k5E67yYY",
@@ -67,7 +76,7 @@ function createChallenge() {
     newChallengeRef.onSnapshot(function(doc) {
         data = doc.data()
         if (data.started) {
-            alert(doc.data().playerTwo + ' Joined!');
+            alert(doc.data().playerTwo + ' Joined!'); // change page 
         }
     });
 }
@@ -86,7 +95,7 @@ function joinChallenge(id) {
 
     challengeRef.get().then(function(doc) {
 	    if (doc.exists) {
-			alert('You Joined ' + doc.data().playerOne + '!');
+			alert('You Joined ' + doc.data().playerOne + '!'); // change page 
 	        console.log("Document data:", doc.data());
 	    } else {
 	        console.log("No such document!");
